@@ -1,5 +1,21 @@
 
-#include <stdio.h>
+#include <stdio.h>  // printf() etc
+#include <stdlib.h> // exit()
+
+#include <sys/types.h> // open()
+#include <sys/stat.h>  // open()
+#include <fcntl.h>     // open()
+
+#include <unistd.h> // close()
+
+
+void ifdie(int condition, const char *message)
+{
+  if (condition) {
+    perror(message); // ok if message is NULL
+    exit(-1);
+  }
+}
 
 const char usageMessage[] = "Usage: ./fconc infile1 infile2 [outfile (default:fconc.out)]\n";
 const char defaultOutfile[] = "fconc.out";
@@ -37,9 +53,18 @@ int parseArgs(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-  if (parseArgs(argc, argv)) return -1;
+  if (parseArgs(argc, argv) < 0) return -1;
 
-  printf("args: %s %s %s\n", args.infile1, args.infile2, args.outfile);
+  int infile1FD = open(args.infile1, O_RDONLY);
+  ifdie(infile1FD < 0, args.infile1);
+
+  int infile2FD = open(args.infile2, O_RDONLY);
+  ifdie(infile2FD < 0, args.infile2);
+
+  printf("%d %d\n", infile1FD, infile2FD);
+
+  ifdie(close(infile1FD) < 0, args.infile1);
+  ifdie(close(infile2FD) < 0, args.infile2);
 
   return 0;
 }
