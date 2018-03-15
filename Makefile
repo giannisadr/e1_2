@@ -1,4 +1,5 @@
 
+
 all: clean fconc
 
 fconc: fconc.o
