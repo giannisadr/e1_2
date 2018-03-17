@@ -19,17 +19,13 @@ void ifdie(int condition, const char *message)
 
 const char usageMessage[] = "Usage: ./fconc infile1 infile2 [outfile (default:fconc.out)]\n";
 const char defaultOutfile[] = "fconc.out";
+const ssize_t blockSize = 4 * 1024; // 4 KiB
 
 struct {
   const char *infile1;
   const char *infile2;
   const char *outfile;
 } args;
-
-void printUsage()
-{
-  printf(usageMessage);
-}
 
 int parseArgs(int argc, char **argv)
 {
@@ -51,14 +47,17 @@ int parseArgs(int argc, char **argv)
   return 0;
 }
 
-void write_file(int out_fd, const char *infile)	{
+void write_file(int outfileFD, const char *infile)	{
   int infileFD = open(infile, O_RDONLY);
   ifdie(infileFD < 0, infile);
 
-  char buffer[1000000];
-
-  ssize_t count = read(infileFD, buffer, sizeof(buffer));
-  write(out_fd, buffer, count);
+  char buffer[blockSize];
+  ssize_t readCount;
+  do {
+    readCount = read(infileFD, buffer, sizeof(buffer));
+    ifdie(readCount < 0, infile);
+    write(outfileFD, buffer, readCount);
+  } while (readCount == blockSize);
 
   ifdie(close(infileFD) < 0, infile);
 }
