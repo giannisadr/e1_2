@@ -18,6 +18,7 @@ void ifdie(int condition, const char *message)
 }
 
 const char usageMessage[] = "Usage: ./fconc infile1 infile2 [outfile (default:fconc.out)]\n";
+const char tempOutfile[] = "fconc.out.temp";
 const char defaultOutfile[] = "fconc.out";
 const ssize_t blockSize = 4 * 1024; // 4 KiB
 
@@ -64,16 +65,18 @@ void write_file(int outfileFD, const char *infile)	{
 
 int main(int argc, char **argv)
 {
- if (parseArgs(argc, argv) < 0) return -1;
+  if (parseArgs(argc, argv) < 0) return -1;
 
- int outfileFD = open(args.outfile,
-                      O_CREAT | O_WRONLY | O_TRUNC,
-                      S_IRUSR | S_IWUSR);
+  int outfileFD = open(tempOutfile,
+                       O_CREAT | O_WRONLY | O_TRUNC,
+                       S_IRUSR | S_IWUSR);
 
   write_file(outfileFD, args.infile1);
   write_file(outfileFD, args.infile2);
 
-  ifdie(close(outfileFD) < 0, args.outfile);
+  ifdie(close(outfileFD) < 0, "Can't close temporary output file");
+
+  ifdie(rename(tempOutfile, args.outfile) < 0, args.outfile);
 
   return 0;
 }
