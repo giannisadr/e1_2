@@ -48,6 +48,15 @@ int parseArgs(int argc, char **argv)
   return 0;
 }
 
+void do_write(int outfileFD, const char *buffer, ssize_t count)
+{
+  ssize_t wcnt = 0, idx = 0;
+  for (idx = 0; idx < count; idx += wcnt) {
+    wcnt = write(outfileFD, buffer + idx, count - idx);
+    ifdie(wcnt < 0, args.outfile);
+  }
+}
+
 void write_file(int outfileFD, const char *infile)	{
   int infileFD = open(infile, O_RDONLY);
   ifdie(infileFD < 0, infile);
@@ -57,7 +66,7 @@ void write_file(int outfileFD, const char *infile)	{
   do {
     readCount = read(infileFD, buffer, sizeof(buffer));
     ifdie(readCount < 0, infile);
-    write(outfileFD, buffer, readCount);
+    do_write(outfileFD, buffer, readCount);
   } while (readCount == blockSize);
 
   ifdie(close(infileFD) < 0, infile);
